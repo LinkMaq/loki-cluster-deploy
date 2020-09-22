@@ -1,0 +1,144 @@
+version: "2.4"
+services:
+  consul:
+    image: consul:1.7.8
+    runtime: runc
+    restart: always
+    ports:
+      - 18500:8500
+    environment:
+      - CONSUL_BIND_INTERFACE=eth0
+    volumes:
+      - 'consul_data:/consul/data'
+  distributor:
+    image: grafana/loki:1.6.0
+    runtime: runc
+    scale: 3
+    volumes:
+      - ./local-config.cluster.yaml:/etc/loki/local-config.yaml
+    command: -target=distributor -config.file=/etc/loki/local-config.yaml
+    depends_on:
+    - cassandra
+    - redis
+    - minio
+    - consul
+    restart: always
+    user: root
+  ingester:
+    image: grafana/loki:1.6.0
+    runtime: runc
+    scale: 3
+    volumes:
+      - ./local-config.cluster.yaml:/etc/loki/local-config.yaml
+    command: -target=ingester -config.file=/etc/loki/local-config.yaml -log.level=debug
+    depends_on:
+    - cassandra
+    - redis
+    - minio
+    - consul
+    restart: always
+    user: root
+  querier-frontend:
+    image: grafana/loki:1.6.0
+    runtime: runc
+    scale: 2
+    volumes:
+      - ./local-config.cluster.yaml:/etc/loki/local-config.yaml
+    command: -target=query-frontend -config.file=/etc/loki/local-config.yaml
+    depends_on:
+    - cassandra
+    - redis
+    - minio
+    - consul
+    restart: always
+    user: root
+  querier:
+    image: grafana/loki:1.6.0
+    runtime: runc
+    scale: 3
+    volumes:
+      - ./local-config.cluster.yaml:/etc/loki/local-config.yaml
+    command: -target=querier -config.file=/etc/loki/local-config.yaml
+    depends_on:
+    - cassandra
+    - redis
+    - minio
+    - consul
+    restart: always
+    user: root
+  table-manager:
+    image: grafana/loki:1.6.0
+    runtime: runc
+    volumes:
+      - ./local-config.cluster.yaml:/etc/loki/local-config.yaml
+    command: -target=table-manager -config.file=/etc/loki/local-config.yaml
+    depends_on:
+    - cassandra
+    - redis
+    - minio
+    - consul
+    restart: always
+    user: root
+  cassandra:
+    image: bitnami/cassandra:3-debian-10
+    runtime: runc
+    volumes:
+      - 'cassandra_data:/bitnami'
+    environment:
+      - CASSANDRA_SEEDS=cassandra
+      - CASSANDRA_PASSWORD_SEEDER=yes
+      - CASSANDRA_PASSWORD=cassandra
+  redis:
+    image: redis:5.0.6-alpine
+    runtime: runc
+    restart: always
+    command: /etc/redis.conf
+    volumes:
+      - ./redis.conf:/etc/redis.conf:ro
+    depends_on:
+    - cassandra
+    - minio
+    - consul
+  minio:
+    image: minio/minio:RELEASE.2020-09-21T22-31-59Z
+    runtime: runc
+    restart: always
+    ports:
+      - 9001:9000
+    environment:
+      - MINIO_ACCESS_KEY=key123456
+      - MINIO_SECRET_KEY=password123456
+    volumes:
+      - 'minio_data:/data:rw'
+    command: server  /data
+    depends_on:
+    - minio-init
+  gateway:
+    image: nginx:1.15.1-alpine
+    runtime: runc
+    container_name: gateway
+    restart: always
+    ports:
+      - 3200:3200
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+    - querier
+    - querier-frontend
+    - distributor
+    - ingester
+    - consul
+    - table-manager
+  minio-init:
+    image: busybox
+    runtime: runc
+    command: mkdir -p /data/loki
+    volumes:
+      - 'minio_data:/data:rw'
+volumes:
+  cassandra_data:
+    driver: local
+  consul_data:
+    driver: local
+  minio_data:
+    driver: local
