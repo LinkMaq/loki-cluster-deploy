@@ -1,0 +1,42 @@
+replicaCount: 1
+
+image:
+  repository: minio/minio:RELEASE.2020-09-21T22-31-59Z
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+svcNameOverride: ""
+
+service:
+  type: NodePort
+  ports:
+  - name: http-9000
+    port: 9000
+    protocol: TCP
+    targetPort: 9000
+
+resources: 
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: "1"
+    memory: 2Gi
+
+livenessProbe:
+  failureThreshold: 3
+  initialDelaySeconds: 120
+  periodSeconds: 30
+  successThreshold: 1
+  timeoutSeconds: 5
+  tcpSocket:
+    port: 9000
+  
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+volumeMounts: []
+
+volumes: []

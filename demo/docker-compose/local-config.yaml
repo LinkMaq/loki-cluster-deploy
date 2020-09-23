@@ -22,10 +22,11 @@ distributor:
 frontend:
     compress_responses: true
     max_outstanding_per_tenant: 200
+    downstream_url: http://querier:3100    
 frontend_worker:
     frontend_address: querier-frontend:9095
     grpc_client_config:
-        max_send_msg_size: 1.048576e+08
+        max_send_msg_size: 20971520
     parallelism: 10
 ingester:
     chunk_block_size: 262144
@@ -50,7 +51,7 @@ ingester:
     max_transfer_retries: 10
 ingester_client:
     grpc_client_config:
-        max_recv_msg_size: 6.7108864e+07
+        max_recv_msg_size: 20971520
     remote_timeout: 1s
 limits_config:
     enforce_metric_name: false
@@ -76,21 +77,22 @@ query_range:
         max_freshness: 10m
     split_queries_by_interval: 6h
 schema_config:
-      - from: 2020-09-20
-        store: cassandra
-        object_store: aws
-        schema: v11
-        index:
-            prefix: index_
-            period: 720h
-        chunks:
-            prefix: chunks_
-            period: 720h
+    configs:
+    - from: 2020-09-20
+      store: cassandra
+      object_store: aws
+      schema: v11
+      index:
+          prefix: index_
+          period: 720h
+      chunks:
+          prefix: chunks_
+          period: 720h
 server:
     graceful_shutdown_timeout: 5s
     grpc_server_max_concurrent_streams: 0
-    grpc_server_max_recv_msg_size: 10000000
-    grpc_server_max_send_msg_size: 10000000
+    grpc_server_max_recv_msg_size: 100000000
+    grpc_server_max_send_msg_size: 100000000
     http_listen_port: 3100
     http_server_idle_timeout: 120s
     http_server_write_timeout: 1m

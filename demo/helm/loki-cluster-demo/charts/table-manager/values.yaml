@@ -1,0 +1,47 @@
+replicaCount: 1
+
+image:
+  repository: grafana/loki:1.6.0
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+svcNameOverride: ""
+
+service:
+  type: ClusterIP
+  ports:
+  - name: http-3100
+    port: 3100
+    protocol: TCP
+    targetPort: 3100
+  - name: grpc-9095
+    port: 9095
+    protocol: TCP
+    targetPort: 9095
+
+
+resources: 
+  requests:
+    cpu: 200m
+    memory: 256Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi 
+
+livenessProbe:
+  failureThreshold: 3
+  initialDelaySeconds: 120
+  periodSeconds: 30
+  successThreshold: 1
+  timeoutSeconds: 5
+  tcpSocket:
+    port: 3100
+  
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+volumeMounts: []
+
+volumes: []

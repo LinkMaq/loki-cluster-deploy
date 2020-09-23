@@ -1,0 +1,42 @@
+replicaCount: 2
+
+image:
+  repository: nginx:1.15.1-alpine
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+svcNameOverride: ""
+
+service:
+  type: NodePort
+  ports:
+  - name: http-3100
+    port: 3100
+    protocol: TCP
+    targetPort: 3100
+
+resources: 
+  requests:
+    cpu: 200m
+    memory: 256Mi
+  limits:
+    cpu: "1"
+    memory: 2Gi 
+
+livenessProbe:
+  failureThreshold: 3
+  initialDelaySeconds: 120
+  periodSeconds: 30
+  successThreshold: 1
+  timeoutSeconds: 5
+  tcpSocket:
+    port: 3100
+  
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+volumeMounts: []
+
+volumes: []

@@ -1,0 +1,42 @@
+replicaCount: 1
+
+image:
+  repository: redis:5.0.6-alpine
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+svcNameOverride: ""
+
+service:
+  type: ClusterIP
+  ports:
+  - name: http-6379
+    port: 6379
+    protocol: TCP
+    targetPort: 6379
+
+resources: 
+  requests:
+    cpu: 200m
+    memory: 2Gi
+  limits:
+    cpu: "1"
+    memory: 4Gi 
+
+livenessProbe:
+  failureThreshold: 3
+  initialDelaySeconds: 120
+  periodSeconds: 30
+  successThreshold: 1
+  timeoutSeconds: 5
+  tcpSocket:
+    port: 6379
+  
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+volumeMounts: []
+
+volumes: []

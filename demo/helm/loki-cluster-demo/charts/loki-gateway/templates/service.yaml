@@ -1,0 +1,17 @@
+{{- if and .Values.global .Values.global.ignoreService -}}
+{{- else }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "app.svcname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "app.labels" . | indent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+{{- toYaml .Values.service.ports | nindent 4 }}
+  selector:
+    app: {{ include "app.name" . }}
+    app.instance: {{ .Release.Name }}
+{{- end }}

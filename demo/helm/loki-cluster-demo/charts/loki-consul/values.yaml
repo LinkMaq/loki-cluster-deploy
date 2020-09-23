@@ -1,0 +1,63 @@
+replicaCount: 1
+
+image:
+  repository: consul:1.7.8
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+svcNameOverride: ""
+
+CONSUL_BIND_INTERFACE: eth0
+
+service:
+  type: ClusterIP
+  ports:
+  - name: http-8500
+    port: 8500
+    protocol: TCP
+    targetPort: 8500
+  - name: http-8300
+    port: 8300
+    protocol: TCP
+    targetPort: 8300
+  - name: http-8301
+    port: 8301
+    protocol: TCP
+    targetPort: 8301
+  - name: http-8302
+    port: 8302
+    protocol: TCP
+    targetPort: 8302
+  - name: http-8600
+    port: 8600
+    protocol: TCP
+    targetPort: 8600
+
+
+
+
+resources: 
+  requests:
+    cpu: 200m
+    memory: 128Mi
+  limits:
+    cpu: "1"
+    memory: 512Mi
+
+livenessProbe:
+  failureThreshold: 3
+  initialDelaySeconds: 120
+  periodSeconds: 30
+  successThreshold: 1
+  timeoutSeconds: 5
+  tcpSocket:
+    port: 8500
+  
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+volumeMounts: []
+
+volumes: []

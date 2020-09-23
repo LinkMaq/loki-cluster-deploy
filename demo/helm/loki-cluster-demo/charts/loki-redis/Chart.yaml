@@ -1,0 +1,3 @@
+description: redis
+name: loki-redis
+version: 0.0.1

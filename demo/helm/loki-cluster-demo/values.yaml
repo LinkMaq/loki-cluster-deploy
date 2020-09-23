@@ -1,0 +1,183 @@
+global:
+  name: loki-cluster-demo
+
+  configmaps:
+  - redis.conf
+
+loki-minio:
+  svcNameOverride: loki-minio
+  nameOverride: loki-minio
+  fullnameOverride: loki-minio
+  access_key: key123456
+  secret_key: password123456
+  image:
+    repository: minio/minio:RELEASE.2020-09-21T22-31-59Z
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+  persistence:
+  - name: data  
+    storageClass: "local-path"
+    size: 10Gi
+    accessMode: ReadWriteOnce
+    mount_path: /data
+
+loki-consul:
+  svcNameOverride: loki-consul
+  nameOverride: loki-consul
+  fullnameOverride: loki-consul
+  CONSUL_BIND_INTERFACE: eth0
+  image:
+    repository: consul:1.7.8
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+  persistence:
+  - name: data
+    storageClass: "local-path"
+    size: 1Gi
+    accessMode: ReadWriteOnce
+    mount_path: /consul/data
+
+loki-cassandra:
+  svcNameOverride: loki-cassandra
+  nameOverride: loki-cassandra
+  fullnameOverride: loki-cassandra
+  cassandra_password: cassandra
+  image:
+    repository: bitnami/cassandra:3-debian-10
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "8Gi"
+    limits:
+      cpu: "1"
+      memory: "10Gi"
+  persistence:
+  - name: data
+    storageClass: "local-path"
+    size: 5Gi
+    accessMode: ReadWriteOnce
+    mount_path: /bitnami
+
+loki-redis:
+  svcNameOverride: loki-redis
+  nameOverride: loki-redis
+  fullnameOverride: loki-redis
+  image:
+    repository: redis:5.0.6-alpine
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "2Gi"
+    limits:
+      cpu: "1"
+      memory: "4Gi"
+
+loki-querier:
+  replicaCount: 3
+  svcNameOverride: loki-querier
+  nameOverride: loki-querier
+  fullnameOverride: loki-querier
+  image:
+    repository:  grafana/loki:1.6.0
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+
+loki-querier-frontend:
+  replicaCount: 2
+  svcNameOverride: loki-querier-frontend
+  nameOverride: loki-querier-frontend
+  fullnameOverride: loki-querier-frontend
+  image:
+    repository:  grafana/loki:1.6.0
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+
+loki-distributor:
+  replicaCount: 3
+  svcNameOverride: loki-distributor
+  nameOverride: loki-distributor
+  fullnameOverride: loki-distributor
+  image:
+    repository:  grafana/loki:1.6.0
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+
+loki-ingester:
+  replicaCount: 3
+  svcNameOverride: loki-ingester
+  nameOverride: loki-ingester
+  fullnameOverride: loki-ingester
+  image:
+    repository:  grafana/loki:1.6.0
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+
+table-manager:
+  replicaCount: 1
+  svcNameOverride: table-manager
+  nameOverride: table-manager
+  fullnameOverride: table-manager
+  image:
+    repository:  grafana/loki:1.6.0
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+
+loki-gateway:
+  replicaCount: 2
+  svcNameOverride: loki-gateway
+  nameOverride: loki-gateway
+  fullnameOverride: loki-gateway
+  image:
+    repository:  nginx:1.15.1-alpine
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "1"
+      memory: "2Gi"

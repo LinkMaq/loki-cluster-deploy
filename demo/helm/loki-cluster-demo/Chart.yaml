@@ -1,0 +1,4 @@
+description: Deploy Loki Cluster, only for demo
+name: loki-cluster-demo
+version: 0.0.1
+app_version: 1.6.0

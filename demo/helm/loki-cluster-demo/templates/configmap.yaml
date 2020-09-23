@@ -1,0 +1,17 @@
+{{- $root := . -}}
+{{- range $cm := .Values.global.configmaps -}}
+{{- $configmap_glob := printf "configmap/%s*" $cm -}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: {{ $root.Release.Namespace }}
+  labels:
+{{ include "simple.labels" $root | indent 4 }}
+  name: {{ $cm }}
+data:
+{{- range $path, $bytes := $root.Files.Glob $configmap_glob }}
+  {{ base $path }}: |-
+{{- $root.Files.Get $path | nindent 4 }}
+{{- end }}
+{{ end }}

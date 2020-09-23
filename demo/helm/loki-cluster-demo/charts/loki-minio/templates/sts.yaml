@@ -1,0 +1,110 @@
+{{- $root := . -}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "app.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "app.labels" . | indent 4 }}
+spec:
+  replicas: 1
+  serviceName:  {{ .Values.svcNameOverride }}
+  {{- with .Values.strategy }}
+  strategy:
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app: {{ include "app.name" . }}
+      app.instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "app.name" . }}
+        app.instance: {{ .Release.Name }}
+        {{- if .Values.image.tag }}
+        app.image.version: {{ .Values.image.tag | quote }}
+        {{- end }}
+        {{- if .Values.logColect }}
+        log-collect: "true"
+        {{- end }}
+      annotations:
+        {{- if .Values.istioInject }}
+        sidecar.istio.io/inject: "true"
+        {{- else }}
+        sidecar.istio.io/inject: "false"
+        {{- end }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 6 }}
+      {{- end }}
+      containers:
+      - name: {{ .Chart.Name }}
+        image: {{ .Values.image.repository }}{{ if .Values.image.tag }}{{ printf ":%s" .Values.image.tag }}{{ end }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        {{- with .Values.service }}
+        ports:
+	    {{- range .ports }}
+        - containerPort: {{ .targetPort }}
+          name: {{ .name }}
+          protocol: {{ .protocol }}
+	    {{- end }}
+        {{- end}}
+        env:
+        - name: MINIO_ACCESS_KEY
+          value: {{ .Values.access_key }}
+        - name: MINIO_SECRET_KEY
+          value: {{ .Values.secret_key }}
+        {{- with .Values.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- range .Values.persistence }}
+        args: ["server",  "{{ .mount_path }}"]
+        volumeMounts:
+        - name: {{ .name }}
+          mountPath: {{ .mount_path }}
+        {{- end }}
+        {{- with .Values.livenessProbe }}
+        livenessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.readinessProbe }}
+        readinessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      initContainers:
+      - image: busybox
+        imagePullPolicy: IfNotPresent
+        name: minio-init
+        {{- range .Values.persistence }}
+        command: ["mkdir", "-p", "{{ .mount_path }}/loki"]
+        volumeMounts:
+        - name: {{ .name }}
+          mountPath: {{ .mount_path }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 6 }}
+      {{- end }}
+      volumes:
+      {{- with .Values.volumes }}
+        {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- range .Values.persistence }}
+      - persistentVolumeClaim:
+          claimName: {{ include "app.fullname" $root }}-{{ .name }}
+        name: {{ .name }}
+      {{- end }}
