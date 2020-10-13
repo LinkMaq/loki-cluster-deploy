@@ -3,6 +3,7 @@ global:
 
   configmaps:
   - redis.conf
+  - rules.yaml
 
 loki-minio:
   svcNameOverride: loki-minio
@@ -92,7 +93,7 @@ loki-querier:
   nameOverride: loki-querier
   fullnameOverride: loki-querier
   image:
-    repository:  grafana/loki:1.6.0
+    repository:  grafana/loki:latest
     pullPolicy: IfNotPresent
   resources:
     requests:
@@ -108,7 +109,7 @@ loki-querier-frontend:
   nameOverride: loki-querier-frontend
   fullnameOverride: loki-querier-frontend
   image:
-    repository:  grafana/loki:1.6.0
+    repository:  grafana/loki:latest
     pullPolicy: IfNotPresent
   resources:
     requests:
@@ -124,7 +125,7 @@ loki-distributor:
   nameOverride: loki-distributor
   fullnameOverride: loki-distributor
   image:
-    repository:  grafana/loki:1.6.0
+    repository:  grafana/loki:latest
     pullPolicy: IfNotPresent
   resources:
     requests:
@@ -140,7 +141,7 @@ loki-ingester:
   nameOverride: loki-ingester
   fullnameOverride: loki-ingester
   image:
-    repository:  grafana/loki:1.6.0
+    repository:  grafana/loki:latest
     pullPolicy: IfNotPresent
   resources:
     requests:
@@ -156,7 +157,7 @@ table-manager:
   nameOverride: table-manager
   fullnameOverride: table-manager
   image:
-    repository:  grafana/loki:1.6.0
+    repository:  grafana/loki:latest
     pullPolicy: IfNotPresent
   resources:
     requests:
@@ -181,3 +182,19 @@ loki-gateway:
     limits:
       cpu: "1"
       memory: "2Gi"
+loki-ruler:
+  replicaCount: 1
+  svcNameOverride: loki-ruler
+  nameOverride: loki-ruler
+  fullnameOverride: loki-ruler
+  image:
+    repository:  grafana/loki:latest
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+

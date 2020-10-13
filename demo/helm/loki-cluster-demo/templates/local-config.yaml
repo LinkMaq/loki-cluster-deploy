@@ -84,7 +84,7 @@ data:
                 redis:
                     endpoint:  {{ index .Values "loki-redis" "svcNameOverride" }}:6379
                     expiration: 1h
-            max_freshness: 10m
+                    #max_freshness: 10m
         split_queries_by_interval: 2h
     schema_config:
         configs:

@@ -11,7 +11,7 @@ services:
     volumes:
       - 'consul_data:/consul/data'
   distributor:
-    image: grafana/loki:1.6.0
+    image: grafana/loki:latest
     runtime: runc
     scale: 3
     volumes:
@@ -25,7 +25,7 @@ services:
     restart: always
     user: root
   ingester:
-    image: grafana/loki:1.6.0
+    image: grafana/loki:latest
     runtime: runc
     scale: 3
     volumes:
@@ -39,7 +39,7 @@ services:
     restart: always
     user: root
   querier-frontend:
-    image: grafana/loki:1.6.0
+    image: harbor.cloudminds.com/sre/loki:latest
     runtime: runc
     scale: 2
     volumes:
@@ -53,7 +53,7 @@ services:
     restart: always
     user: root
   querier:
-    image: grafana/loki:1.6.0
+    image: harbor.cloudminds.com/sre/loki:latest
     runtime: runc
     scale: 3
     volumes:
@@ -67,7 +67,7 @@ services:
     restart: always
     user: root
   table-manager:
-    image: grafana/loki:1.6.0
+    image: harbor.cloudminds.com/sre/loki:latest
     runtime: runc
     volumes:
       - ./local-config.yaml:/etc/loki/local-config.yaml
@@ -77,6 +77,25 @@ services:
     - redis
     - minio
     - consul
+    restart: always
+    user: root
+  ruler:
+    image: harbor.cloudminds.com/sre/loki:latest
+    runtime: runc
+    volumes:
+      - ./local-config.yaml:/etc/loki/local-config.yaml
+      - ./rules:/loki/rules
+    command: -target=ruler -config.file=/etc/loki/local-config.yaml —log.level=debug
+    depends_on:
+    - cassandra
+    - redis
+    - minio
+    - consul
+    - querier
+    - distributor
+    - ingester
+    - querier-frontend
+    - gateway
     restart: always
     user: root
   cassandra:
@@ -114,7 +133,7 @@ services:
     depends_on:
     - minio-init
   gateway:
-    image: nginx:1.15.1-alpine
+    image: harbor.cloudminds.com/library/nginx:1.15.1-alpine
     runtime: runc
     container_name: gateway
     restart: always

@@ -74,7 +74,7 @@ query_range:
             redis:
                 endpoint: redis:6379
                 expiration: 1h
-        max_freshness: 10m
+                #max_freshness: 10m
     split_queries_by_interval: 6h
 schema_config:
     configs:
@@ -125,4 +125,18 @@ table_manager:
         provisioned_write_throughput: 0
     retention_deletes_enabled: false
     retention_period: 0
-
+ruler:
+  storage:
+    type: local
+    local:
+      directory: /loki/rules
+  ring:
+    kvstore:
+      consul:
+        host: consul:8500
+      store: consul
+  rule_path: /tmp/rules
+  enable_api: true
+  enable_sharding: true
+  enable_alertmanager_v2: true
+  alertmanager_url: "http://172.16.31.9:9093"

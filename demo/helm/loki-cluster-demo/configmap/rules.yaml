@@ -1,0 +1,23 @@
+#groups:
+#  - name: should_fire
+#    rules:
+#      - alert: HighPercentageError
+#        expr: |
+#          sum(rate({app="foo", env="production"} |= "error" [5m])) by (job)
+#            /
+#          sum(rate({app="foo", env="production"}[5m])) by (job)
+#            > 0.05
+#        for: 10m
+#        labels:
+#            severity: page
+#        annotations:
+#            summary: High request latency
+#  - name: credentials_leak
+#    rules:
+#      - alert: http-credentials-leaked
+#        annotations:
+#          message: "{{ $labels.job }} is leaking http basic auth credentials."
+#        expr: 'sum by (cluster, job, pod) (count_over_time({namespace="prod"} |~ "http(s?)://(\\w+):(\\w+)@" [5m]) > 0)'
+#        for: 10m
+#        labels:
+#          severity: critical
