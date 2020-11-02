@@ -1,0 +1,142 @@
+auth_enabled: false
+chunk_store_config:
+    chunk_cache_config:
+        redis:
+            endpoint: redis:6379
+            expiration: 1h
+    max_look_back_period: 0
+    write_dedupe_cache_config:
+        redis:
+            endpoint: redis:6379
+            expiration: 1h
+distributor:
+    ring:
+        kvstore:
+            consul:
+                consistent_reads: false
+                host: consul:8500
+                http_client_timeout: 20s
+                watch_burst_size: 1
+                watch_rate_limit: 1
+            store: consul
+frontend:
+    compress_responses: true
+    max_outstanding_per_tenant: 200
+    downstream_url: http://querier:3100    
+frontend_worker:
+    frontend_address: querier-frontend:9095
+    grpc_client_config:
+        max_send_msg_size: 20971520
+    parallelism: 10
+ingester:
+    chunk_block_size: 262144
+    chunk_idle_period: 30m
+    chunk_target_size: 0
+    max_chunk_age: 1h
+    lifecycler:
+        heartbeat_period: 5s
+        interface_names:
+          - eth0
+        join_after: 30s
+        num_tokens: 512
+        ring:
+            heartbeat_timeout: 1m
+            kvstore:
+                consul:
+                    consistent_reads: true
+                    host: consul:8500
+                    http_client_timeout: 20s
+                store: consul
+            replication_factor: 2
+    max_transfer_retries: 10
+ingester_client:
+    grpc_client_config:
+        max_recv_msg_size: 20971520
+    remote_timeout: 1s
+limits_config:
+    enforce_metric_name: false
+    ingestion_burst_size_mb: 100
+    ingestion_rate_mb: 10
+    ingestion_rate_strategy: global
+    max_global_streams_per_user: 10000
+    max_entries_limit_per_query: 10000
+    max_query_length: 12000h
+    max_query_parallelism: 32
+    max_streams_per_user: 0
+    reject_old_samples: true
+    reject_old_samples_max_age: 168h
+query_range:
+    align_queries_with_step: true
+    cache_results: true
+    max_retries: 5
+    results_cache:
+        cache:
+            redis:
+                endpoint: redis:6379
+                expiration: 1h
+                #max_freshness: 10m
+    split_queries_by_interval: 6h
+schema_config:
+    configs:
+    - from: 2020-09-20
+      store: cassandra
+      object_store: aws
+      schema: v11
+      index:
+          prefix: index_
+          period: 720h
+      chunks:
+          prefix: chunks_
+          period: 720h
+server:
+    graceful_shutdown_timeout: 5s
+    grpc_server_max_concurrent_streams: 0
+    grpc_server_max_recv_msg_size: 100000000
+    grpc_server_max_send_msg_size: 100000000
+    http_listen_port: 3100
+    http_server_idle_timeout: 120s
+    http_server_write_timeout: 1m
+storage_config:
+    cassandra:
+        username: cassandra
+        password: cassandra
+        addresses: cassandra
+        auth: true
+        keyspace: lokiindex
+  
+    aws:
+        s3: s3://key123456:password123456@minio.:9000/loki
+        s3forcepathstyle: true
+  
+    index_queries_cache_config:
+        redis:
+            endpoint: redis:6379
+            expiration: 1h
+table_manager:
+    chunk_tables_provisioning:
+        inactive_read_throughput: 0
+        inactive_write_throughput: 0
+        provisioned_read_throughput: 0
+        provisioned_write_throughput: 0
+    index_tables_provisioning:
+        inactive_read_throughput: 0
+        inactive_write_throughput: 0
+        provisioned_read_throughput: 0
+        provisioned_write_throughput: 0
+    retention_deletes_enabled: false
+    retention_period: 0
+    #ruler:
+    #  storage:
+    #    type: local
+    #    local:
+    #      directory: /loki/rules
+    #  ring:
+    #    kvstore:
+    #      consul:
+    #        host: consul:8500
+    #      store: consul
+    #  rule_path: /tmp/rules
+    #  enable_api: true
+    #  enable_sharding: true
+    #  enable_alertmanager_v2: true
+    #  alertmanager_url: "http://172.16.31.9:9093"

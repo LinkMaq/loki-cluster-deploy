@@ -1,0 +1,236 @@
+version: "2.4"
+services:
+  consul:
+    image: consul:1.7.8
+    runtime: runc
+    restart: always
+    ports:
+      - 8500:8500
+    environment:
+      - CONSUL_BIND_INTERFACE=eth0
+    volumes:
+      - 'consul_data:/consul/data'
+    
+  distributor:
+    image: grafana/loki:1.6.1
+    runtime: runc
+    scale: 3
+    environment:
+      - JAEGER_AGENT_HOST=tempo
+      - JAEGER_ENDPOINT=http://tempo:14268/api/traces 
+      - JAEGER_SAMPLER_TYPE=const
+      - JAEGER_SAMPLER_PARAM=100
+    volumes:
+      - ./local-config.yaml:/etc/loki/local-config.yaml
+    command: -target=distributor -config.file=/etc/loki/local-config.yaml
+    depends_on:
+    - cassandra
+    - redis
+    - minio
+    - consul
+    restart: always
+    user: root
+
+  ingester:
+    image: grafana/loki:1.6.1
+    runtime: runc
+    scale: 3
+    environment:
+      - JAEGER_AGENT_HOST=tempo
+      - JAEGER_ENDPOINT=http://tempo:14268/api/traces
+      - JAEGER_SAMPLER_TYPE=const
+      - JAEGER_SAMPLER_PARAM=100
+    volumes:
+      - ./local-config.yaml:/etc/loki/local-config.yaml
+    command: -target=ingester -config.file=/etc/loki/local-config.yaml -log.level=debug
+    depends_on:
+    - cassandra
+    - redis
+    - minio
+    - consul
+    restart: always
+    user: root
+
+  querier-frontend:
+    image: grafana/loki:1.6.1
+    runtime: runc
+    scale: 2
+    environment:
+      - JAEGER_AGENT_HOST=tempo
+      - JAEGER_ENDPOINT=http://tempo:14268/api/traces
+      - JAEGER_SAMPLER_TYPE=const
+      - JAEGER_SAMPLER_PARAM=100
+    volumes:
+      - ./local-config.yaml:/etc/loki/local-config.yaml
+    command: -target=query-frontend -config.file=/etc/loki/local-config.yaml
+    depends_on:
+    - cassandra
+    - redis
+    - minio
+    - consul
+    restart: always
+    user: root
+
+  querier:
+    image: grafana/loki:1.6.1
+    runtime: runc
+    scale: 3
+    environment:
+      - JAEGER_AGENT_HOST=tempo
+      - JAEGER_ENDPOINT=http://tempo:14268/api/traces
+      - JAEGER_SAMPLER_TYPE=const
+      - JAEGER_SAMPLER_PARAM=100
+    volumes:
+      - ./local-config.yaml:/etc/loki/local-config.yaml
+    command: -target=querier -config.file=/etc/loki/local-config.yaml
+    depends_on:
+    - cassandra
+    - redis
+    - minio
+    - consul
+    restart: always
+    user: root
+
+  table-manager:
+    image: grafana/loki:1.6.1
+    runtime: runc
+    environment:
+      - JAEGER_AGENT_HOST=tempo
+      - JAEGER_ENDPOINT=http://tempo:14268/api/traces
+      - JAEGER_SAMPLER_TYPE=const
+      - JAEGER_SAMPLER_PARAM=100
+    volumes:
+      - ./local-config.yaml:/etc/loki/local-config.yaml
+    command: -target=table-manager -config.file=/etc/loki/local-config.yaml
+    depends_on:
+    - cassandra
+    - redis
+    - minio
+    - consul
+    restart: always
+    user: root
+
+  cassandra:
+    image: bitnami/cassandra:3-debian-10
+    runtime: runc
+    volumes:
+      - 'cassandra_data:/bitnami'
+    environment:
+      - CASSANDRA_SEEDS=cassandra
+      - CASSANDRA_PASSWORD_SEEDER=yes
+      - CASSANDRA_PASSWORD=cassandra
+
+  redis:
+    image: redis:5.0.6-alpine
+    runtime: runc
+    restart: always
+    command: /etc/redis.conf
+    volumes:
+      - ./redis.conf:/etc/redis.conf:ro
+    depends_on:
+    - cassandra
+    - minio
+    - consul
+
+  minio:
+    image: minio/minio:RELEASE.2020-09-21T22-31-59Z
+    runtime: runc
+    restart: always
+    ports:
+      - 9000:9000
+    environment:
+      - MINIO_ACCESS_KEY=key123456
+      - MINIO_SECRET_KEY=password123456
+    volumes:
+      - 'minio_data:/data:rw'
+    command: server  /data
+    depends_on:
+    - minio-init
+
+  gateway:
+    image: nginx:1.14.0-opentracing
+    runtime: runc
+    restart: always
+    ports:
+      - 3100:3100
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./jaeger-config.json:/etc/jaeger-config.json
+      - 'gateway_trace_log:/var/log/nginx/'
+
+  minio-init:
+    image: busybox
+    runtime: runc
+    command: mkdir -p /data/loki && mkdir -p /data/tempo
+    volumes:
+      - 'minio_data:/data:rw'
+
+  jaeger-agent:
+    image: jaegertracing/jaeger-agent:1.20
+    runtime: runc
+    restart: always
+    command: ["--reporter.grpc.host-port=tempo:14250"]
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+
+  tempo:
+    image: grafana/tempo:latest
+    command:
+      - "-storage.trace.backend=local"
+      - "-storage.trace.local.path=/tmp/tempo/traces"
+      - "-storage.trace.wal.path=/tmp/tempo/wal"
+      - "-auth.enabled=false"
+      - "-server.http-listen-port=3100"
+    volumes:
+      - ./tempo/tempo.yaml:/etc/tempo.yaml
+      - 'tempo_data:/tmp/tempo'
+    ports:
+      - "14268"
+      - "14250"
+    depends_on:
+    - minio
+
+  tempo-query:
+    image: grafana/tempo-query:latest
+    command: ["--grpc-storage-plugin.configuration-file=/etc/tempo-query.yaml"]
+    volumes:
+      - ./tempo/tempo-query.yaml:/etc/tempo-query.yaml
+    ports:
+      - "16686:16686" 
+    depends_on:
+    - minio
+    - tempo
+
+  grafana:
+    image: grafana/grafana:7.3.0-beta1
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    ports:
+      - "3000:3000"
+
+  promtail:
+    image: grafana/promtail
+    restart: always
+    volumes:
+      - ./promtail-config.yaml:/etc/promtail/config.yml
+      - /var/log:/var/log
+      - 'gateway_trace_log:/trace/'
+    command:
+      - -config.file=/etc/promtail/config.yml
+
+volumes:
+  cassandra_data:
+    driver: local
+  consul_data:
+    driver: local
+  minio_data:
+    driver: local
+  tempo_data:
+    driver: local
+  gateway_trace_log:
+    driver: local
