@@ -148,7 +148,7 @@ services:
     - minio-init
 
   gateway:
-    image: nginx:1.14.0-opentracing
+    image: quay.io/cloudxiaobai/nginx-jaeger:1.14.0
     runtime: runc
     restart: always
     ports:
