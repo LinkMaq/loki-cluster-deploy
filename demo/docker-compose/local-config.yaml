@@ -103,6 +103,7 @@ storage_config:
         addresses: cassandra
         auth: true
         keyspace: lokiindex
+        consistency: LOCAL_ONE
   
     aws:
         s3: s3://key123456:password123456@minio.:9000/loki
@@ -129,14 +130,14 @@ ruler:
   storage:
     type: local
     local:
-      directory: /loki/rules
+      directory: /data/rules/
   ring:
     kvstore:
       consul:
         host: consul:8500
       store: consul
-  rule_path: /tmp/rules
+  rule_path: /tmp/scratch
   enable_api: true
   enable_sharding: true
   enable_alertmanager_v2: true
-  alertmanager_url: "http://172.16.31.9:9093"
+  alertmanager_url: "http://127.0.0.1:9093"
