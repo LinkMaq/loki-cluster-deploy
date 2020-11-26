@@ -12,7 +12,7 @@ services:
       - 'consul_data:/consul/data'
     
   distributor:
-    image: grafana/loki:1.6.1
+    image: grafana/loki:2.0.0
     runtime: runc
     scale: 3
     environment:
@@ -32,7 +32,7 @@ services:
     user: root
 
   ingester:
-    image: grafana/loki:1.6.1
+    image: grafana/loki:2.0.0
     runtime: runc
     scale: 3
     environment:
@@ -52,7 +52,7 @@ services:
     user: root
 
   querier-frontend:
-    image: grafana/loki:1.6.1
+    image: grafana/loki:2.0.0
     runtime: runc
     scale: 2
     environment:
@@ -72,7 +72,7 @@ services:
     user: root
 
   querier:
-    image: grafana/loki:1.6.1
+    image: grafana/loki:2.0.0
     runtime: runc
     scale: 3
     environment:
@@ -92,7 +92,7 @@ services:
     user: root
 
   table-manager:
-    image: grafana/loki:1.6.1
+    image: grafana/loki:2.0.0
     runtime: runc
     environment:
       - JAEGER_AGENT_HOST=tempo

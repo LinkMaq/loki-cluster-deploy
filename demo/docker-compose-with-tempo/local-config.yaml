@@ -103,6 +103,7 @@ storage_config:
         addresses: cassandra
         auth: true
         keyspace: lokiindex
+        consistency: LOCAL_ONE
   
     aws:
         s3: s3://key123456:password123456@minio.:9000/loki

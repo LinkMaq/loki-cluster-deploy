@@ -1,5 +1,5 @@
 {
-  "service_name": "gateway",
+  "service_name": "loki-gateway",
   "diabled": false,
   "reporter": {
     "logSpans": true,
