@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: loki-system
+  namespace: loki
+  labels:
+    app.kubernetes.io/name: loki-system
+spec:
+  replicas: 3
+  serviceName:  loki-system-headless
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: loki-system
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: loki-system
+    spec:
+      affinity:
+        podAffinity:
+
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: loki-system
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        nodeAffinity:
+      containers:
+      - name: loki-system
+        image: grafana/loki:2.2.1
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3100
+          name: http-3100
+          protocol: TCP
+        - containerPort: 9095
+          name: grpc-9095
+          protocol: TCP
+        - containerPort: 7946
+          name: tcp-7946
+          protocol: TCP
+        resources:
+          limits:
+            cpu: "8"
+            memory: 24Gi
+          requests:
+            cpu: "4"
+            memory: "8Gi"
+        volumeMounts:
+        - name: loki-config
+          mountPath: /etc/loki/
+          readOnly: true
+        - name: data
+          mountPath: /loki/
+        livenessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 120
+          periodSeconds: 30
+          successThreshold: 1
+          tcpSocket:
+            port: 3100
+          timeoutSeconds: 5
+        securityContext:
+          capabilities:
+            add: []
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+          runAsUser: 1001
+      securityContext:
+        fsGroup: 100
+      volumes:
+      - name: loki-config
+        configMap:
+          name: loki-local-config
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      labels:
+        app.kubernetes.io/name: loging-system
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: "100Gi"

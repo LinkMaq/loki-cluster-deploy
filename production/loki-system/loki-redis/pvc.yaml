@@ -1,0 +1,13 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: loki-redis-data
+  namespace: loki
+  labels:
+    app.kubernetes.io/name: loki-redis
+spec:
+  accessModes:
+    - "ReadWriteOnce"
+  resources:
+    requests:
+      storage: 20Gi

@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: loki-frontend-metrics
+  namespace: loki
+  labels:
+    app.kubernetes.io/name: loki-frontend
+spec:
+  jobLabel: jobLabel
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: loki-frontend
+  endpoints:
+    - port: http-3100
+      path: /metrics
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_node_name]
+          targetLabel: host

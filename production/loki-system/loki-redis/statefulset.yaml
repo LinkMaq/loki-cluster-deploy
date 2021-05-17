@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: loki-redis
+  namespace: loki
+  labels:
+    app.kubernetes.io/name: loki-redis
+spec:
+  replicas: 1
+  serviceName:  loki-redis
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: loki-redis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: loki-redis
+    spec:
+      containers:
+      - name: loki-redis
+        image: redis:5.0.6-alpine
+        imagePullPolicy: IfNotPresent
+        args: ["/etc/redis.conf"]
+        ports:
+        - containerPort: 6379
+          name: tcp-6379
+          protocol: TCP
+        resources:
+          limits:
+            cpu: "1"
+            memory: 8Gi
+          requests:
+            cpu: 200m
+            memory: 4Gi
+        volumeMounts:
+        - name: redis-config
+          mountPath: /etc/redis.conf
+          subPath: redis.conf
+          readOnly: true
+        - name: data
+          mountPath: /var/lib/redis
+        livenessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 120
+          periodSeconds: 30
+          successThreshold: 1
+          tcpSocket:
+            port: 6379
+          timeoutSeconds: 5
+        securityContext:
+          capabilities:
+            add: []
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+          runAsUser: 1001
+      - name: loki-redis-exporter
+        image: oliver006/redis_exporter:v1.0.3
+        imagePullPolicy: IfNotPresent
+        args:
+          - -redis.addr=loki-redis:6379
+        ports:
+          - containerPort: 9121
+            name: metrics
+            protocol: TCP
+        resources:
+          limits:
+            cpu: "50m"
+            memory: 32Mi 
+          requests:
+            cpu: 10m
+            memory: 16Mi
+      securityContext:
+        fsGroup: 100
+      volumes:
+      - name: redis-config
+        configMap:
+          name: loki-redis
+      - persistentVolumeClaim:
+          claimName: loki-redis-data
+        name: data

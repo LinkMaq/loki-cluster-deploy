@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: loki-frontend
+  namespace: loki
+  labels:
+    app.kubernetes.io/name: loki-frontend
+spec:
+  replicas: 2
+  serviceName:  loki-frontend
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: loki-frontend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: loki-frontend
+    spec:
+      affinity:
+        podAffinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: loki-frontend
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        nodeAffinity:
+      containers:
+      - name: loki-frontend
+        image: grafana/loki:2.2.1
+        args:
+          - "-config.file=/etc/loki/local-config.yaml"
+          - "-target=query-frontend"
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3100
+          name: http-3100
+          protocol: TCP
+        - containerPort: 9095
+          name: http-9095
+          protocol: TCP
+        resources:
+          limits:
+            cpu: "4"
+            memory: 8Gi
+          requests:
+            cpu: "1"
+            memory: "2Gi"
+        volumeMounts:
+        - name: loki-config
+          mountPath: /etc/loki/
+          readOnly: true
+        livenessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 120
+          periodSeconds: 30
+          successThreshold: 1
+          tcpSocket:
+            port: 3100
+          timeoutSeconds: 5
+        securityContext:
+          capabilities:
+            add: []
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+          runAsUser: 1001
+      securityContext:
+        fsGroup: 100
+      volumes:
+      - name: loki-config
+        configMap:
+          name: loki-local-config

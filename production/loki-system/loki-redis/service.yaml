@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: loki-redis
+  namespace: loki
+  labels:
+    app.kubernetes.io/name: loki-redis
+spec:
+  type: ClusterIP
+  ports:
+    - name: tcp-6379
+      port: 6379
+      protocol: TCP
+      targetPort: 6379
+  selector:
+    app.kubernetes.io/name: loki-redis
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loki-redis-metrics
+  namespace: loki
+  labels:
+    app.kubernetes.io/name: loki-redis
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - name: metrics
+      port: 9121
+      protocol: TCP
+      targetPort: 9121
+  selector:
+    app.kubernetes.io/name: loki-redis
