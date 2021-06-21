@@ -29,7 +29,7 @@ function loki_cleanup(){
     kubectl delete -n loki -f loki-gateway/
     kubectl delete -n loki -f loki-system/
     sleep 30
-    kubectl delete -n loki -f redis/
+    kubectl delete -n loki -f loki-redis/
 }
 
 loki_install
