@@ -13,9 +13,9 @@ function loki_install(){
     kubectl apply -n  loki -f loki-redis/
     sleep 30
     #sleep 120
-    sed -i "" "s#__S3_SECRET_KEY__#${S3_SECRET_KEY}#g" loki-system/configmap.yaml
-    sed -i "" "s#__S3_ACCESS_KEY__#${S3_ACCESS_KEY}#g" loki-system/configmap.yaml
-    sed -i "" "s#__S3_HOST__#${S3_HOST}#g" ./loki-system/configmap.yaml
+    sed -i "s#__S3_SECRET_KEY__#${S3_SECRET_KEY}#g" loki-system/configmap.yaml
+    sed -i "s#__S3_ACCESS_KEY__#${S3_ACCESS_KEY}#g" loki-system/configmap.yaml
+    sed -i "s#__S3_HOST__#${S3_HOST}#g" ./loki-system/configmap.yaml
 
     kubectl apply -n loki -f loki-frontend/
     kubectl apply -n loki -f loki-system/
@@ -29,7 +29,7 @@ function loki_cleanup(){
     kubectl delete -n loki -f loki-gateway/
     kubectl delete -n loki -f loki-system/
     sleep 30
-    kubectl delete -n loki -f redis/
+    kubectl delete -n loki -f loki-redis/
 }
 
 loki_install
